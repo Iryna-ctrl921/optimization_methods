@@ -40,7 +40,6 @@ print("-" * len(header_line))
 a_k, b_k = a0, b0
 f_evals = 0
 
-# Якщо N = 3, виконується лише один крок з delta
 if N == 3:
     m = 3
     L_k = b_k - a_k
@@ -61,7 +60,6 @@ if N == 3:
     )
 
 else:
-    # Загальний випадок для N > 3
     x1 = a_k + (F[N - 2] / F[N]) * (b_k - a_k)
     x2 = a_k + (F[N - 1] / F[N]) * (b_k - a_k)
     fx1, fx2 = f(x1), f(x2)
