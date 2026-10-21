@@ -52,10 +52,14 @@ print(f"        PSNR після Лаб 3: {psnr(restored_bilat, clean):.4f} dB")
 # Частина 4: Градієнтні методи
 L_val = 1.0 + 8.0 * LAMBDA0
 res_gd = gradient_descent(noisy, LAMBDA0, L_val)
+save_png(res_gd['I'], "outputs/lab4_restored.png")
 print(f"\n[Лаб 4] Градієнтний спуск: E = {res_gd['E']:.6f}, Nf = {res_gd['n_f']}")
+print(f"        PSNR після Лаб 4: {psnr(res_gd['I'], clean):.4f} dB")
 
 # Частина 5: Умовна оптимізація
 res_proj = projected_gradient(raw, LAMBDA0, L_val)
 save_png(res_proj['I'], "outputs/lab5_restored.png")
 print(f"\n[Лаб 5] Проєкція градієнта: E = {res_proj['E']:.6f}, порушень = 0")
+print(f"        PSNR після Лаб 5: {psnr(res_proj['I'], clean):.4f} dB")
+
 print("\nУсі розрахунки для Варіанта №3 успішно завершено!")
