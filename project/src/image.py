@@ -1,32 +1,45 @@
-import os
+import math
 import numpy as np
 from PIL import Image as PILImage
 from src.rng import Rng
 
-def load_clean_image(path="Фото.jpg", size=128):
-    """Надійно завантажує зображення з можливих локацій"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    paths_to_try = [
-        path,
-        os.path.join(base_dir, path),
-        os.path.join(base_dir, "..", path),
-        os.path.join(base_dir, "..", "..", path),
-    ]
-    
-    img_pil = None
-    for p in paths_to_try:
-        if os.path.exists(p):
-            img_pil = PILImage.open(p)
-            break
-            
-    if img_pil is None:
-        raise FileNotFoundError(f"Не вдалося знайти файл '{path}'. Переконайтеся, що він знаходиться у теці project.")
-        
-    img_pil = img_pil.convert("L").resize((size, size), PILImage.Resampling.LANCZOS)
-    return np.array(img_pil, dtype=float) / 255.0
+def clean_image(size=128):
+    """Еталонне зображення: градієнт, фігури, шахівниця, смуги"""
+    img = np.zeros((size, size), dtype=float)
+    for i in range(size):
+        for j in range(size):
+            u = j / (size - 1)  
+            v = i / (size - 1)  
+
+            val = 0.25 + 0.35 * (0.6 * u + 0.4 * v)
+            val += 0.08 * math.cos(2 * math.pi * math.sqrt((u - 0.5) ** 2 + (v - 0.5) ** 2))
+
+            if (u - 0.32) ** 2 + (v - 0.34) ** 2 <= 0.16 ** 2:
+                val = 0.92
+
+            if abs(u - 0.70) <= 0.15 and abs(v - 0.30) <= 0.15:
+                val = 0.10
+
+            if 0.60 < v < 0.90 and abs(u - 0.30) < 0.9 * (v - 0.60):
+                val = 0.68
+
+            if 0.58 < u < 0.92 and 0.60 < v < 0.90:
+                cell = max(3, size // 12)
+                val = 0.85 if ((j // cell) + (i // cell)) % 2 == 0 else 0.20
+
+            img[i][j] = min(max(val, 0.0), 1.0)
+
+    for idx in range(4):
+        thickness = max(2, (4 - idx) * max(1, size // 64))
+        row = int(0.04 * size) + idx * max(3, size // 22)
+        if row + thickness < size:
+            img[row:row + thickness, int(0.05 * size):int(0.95 * size)] = 0.98
+
+    return img
+
 
 def add_noise(clean, sigma, seed):
+    """+ Гаусів шум. повертає (raw, noisy)"""
     rng = Rng(seed)
     h, w = clean.shape
     raw = np.zeros((h, w), dtype=float)
@@ -36,13 +49,15 @@ def add_noise(clean, sigma, seed):
     noisy = np.clip(raw, 0.0, 1.0)
     return raw, noisy
 
+
 def save_png(img, path):
-    """Автоматично створює теки та надійно зберігає зображення"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    full_path = os.path.normpath(os.path.join(base_dir, "..", path))
-    
-    # Автоматично створюємо папку (наприклад, outputs), якщо її не існує
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
-    
+    """Зберігає масив [0,1] png8."""
     data = (np.clip(img, 0.0, 1.0) * 255.0).round().astype(np.uint8)
-    PILImage.fromarray(data, mode="L").save(full_path)
+    PILImage.fromarray(data, mode="L").save(path)
+
+
+def load_png(path, size=128):
+    """Читає png, переводить у сірі тони і масштабує до size×size"""
+    with PILImage.open(path) as handle:
+        gray = handle.convert("L").resize((size, size), PILImage.BILINEAR)
+    return np.asarray(gray, dtype=float) / 255.0

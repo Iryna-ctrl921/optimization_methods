@@ -2,24 +2,29 @@ import math
 import numpy as np
 
 def gaussian_blur(img, sigma):
+    """Розмиття гаусом"""
     if sigma <= 1e-6:
         return img.copy()
     r = int(4.0 * sigma + 0.5)
     t = np.arange(-r, r + 1, dtype=float)
     kernel = np.exp(-(t * t) / (2.0 * sigma * sigma))
     kernel /= kernel.sum()
+
     h, w = img.shape
     tmp = np.zeros_like(img)
     for k in range(-r, r + 1):
         cols = np.clip(np.arange(w) + k, 0, w - 1)
         tmp += kernel[k + r] * img[:, cols]
+
     out = np.zeros_like(img)
     for k in range(-r, r + 1):
         rows = np.clip(np.arange(h) + k, 0, h - 1)
         out += kernel[k + r] * tmp[rows, :]
     return out
 
+
 def bilateral_filter(img, sigma_spatial, sigma_range):
+    """Білатеральний фільтр, усереднює лише схожих за яскравістю сусідів"""
     sigma_spatial = max(float(sigma_spatial), 1e-3)
     sigma_range = max(float(sigma_range), 1e-3)
     r = int(min(max(round(2.0 * sigma_spatial), 1), 5))

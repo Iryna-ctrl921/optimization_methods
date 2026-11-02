@@ -1,10 +1,13 @@
+
 import math
 import numpy as np
 
 def mse(a, b):
+    """СКП помилка між зображеннями"""
     return float(np.mean((a - b) ** 2))
 
 def psnr(a, b):
+    """Пікове відношення сигнал/шум у дБ"""
     value = mse(a, b)
     if value <= 0.0:
         return float("inf")

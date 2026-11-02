@@ -1,10 +1,12 @@
 import math
 
 MASK64 = (1 << 64) - 1
-MULT = 6364136223846793005
-INCR = 1442695040888963407
+MULT   = 6364136223846793005
+INCR   = 1442695040888963407
 
 class Rng:
+    """Лінійний конгруентний генератор"""
+
     def __init__(self, seed):
         self.state = seed & MASK64
 
@@ -13,11 +15,13 @@ class Rng:
         return self.state
 
     def uniform(self):
+        """рівномірне число в [0, 1)."""
         return (self.next_u64() >> 11) * (1.0 / 9007199254740992.0)
 
     def normal(self):
+        """Нормальне число: середнє 0, стандартне відх 1"""
         u1 = self.uniform()
         if u1 < 1e-300:
-            u1 = 1e-300
+            u1 = 1e-300  
         u2 = self.uniform()
         return math.sqrt(-2.0 * math.log(u1)) * math.cos(2.0 * math.pi * u2)
