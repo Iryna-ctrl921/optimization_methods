@@ -4,11 +4,9 @@ def g_constraint(x):
     """Обмеження g(x) <= 0."""
     return 4.0 - x[0] - x[1]
 
-
 def grad_g(x):
     """Градієнт обмеження: (-1, -1)."""
     return np.array([-1.0, -1.0])
-
 
 def penalty_wrappers(F, gradF, r):
     """
@@ -54,7 +52,6 @@ def svenn_search(f, x, d, delta0=0.01):
         k += 1
     return min(h_prev, h_new), max(h_prev, h_new)
 
-
 def golden_section_search(f, x, d, a, b, eps=1e-4):
     tau = (np.sqrt(5.0) - 1.0) / 2.0
     h1 = b - tau * (b - a)
@@ -75,7 +72,7 @@ def golden_section_search(f, x, d, a, b, eps=1e-4):
     return (a + b) / 2.0
 
 
-def fletcher_reeves_inner(Phi, gradPhi, x_start, eps=0.01, max_iter=100):
+def fletcher_reeves_inner(Phi, gradPhi, x_start, eps=0.01, max_iter=100, guard_inf=False, eps_line=1e-4):
     """
     Метод Флетчера-Рівса з ЛР 9 для мінімізації Phi.
     Повертає: x, k (число кроків), n_f, n_grad, history, converged
@@ -111,7 +108,13 @@ def fletcher_reeves_inner(Phi, gradPhi, x_start, eps=0.01, max_iter=100):
             break
 
         a, b = svenn_search(f, x, d, delta0=0.01)
-        h = golden_section_search(f, x, d, a, b, eps=1e-4)
+        h = golden_section_search(f, x, d, a, b, eps=eps_line)
+
+        if guard_inf:
+            guard = 0
+            while not np.isfinite(f(x + h * d)) and guard < 60:
+                h /= 2.0
+                guard += 1
 
         x_next = x + h * d
         g_next = grad(x_next)
